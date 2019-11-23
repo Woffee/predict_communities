@@ -100,6 +100,42 @@ class k_eta_core:
                 kk = k
         return kk
 
+    # (k,eta)-cores
+    def cores(self, k, eta):
+        deg = {}
+        D = {}
+        c = {}
+        max_deg = 0
+        print("calculating eta_deg...")
+        for v in self.G.nodes:
+            tmp = self.eta_deg(v, eta)
+            if tmp > max_deg:
+                max_deg = tmp
+            deg[v] = tmp
+            vv = [v]
+            if tmp in D.keys():
+                D[tmp] = list(set(D[tmp]).union(set(vv)))
+            else:
+                D[tmp] = vv
+
+        print("updating...")
+        print("deg:", deg)
+        print("D:", D)
+        for k in range(max_deg+1):
+            while k in D.keys() and D[k] != []:
+                v = D[k].pop()
+                c[v] = k
+                adj = list(self.G.neighbors(v))
+                for u in adj:
+                    if deg[u]>k:
+                        # recompute eta-deg(u)
+                        tmp = self.eta_deg(v, eta)
+                        D[deg[u]].remove(u)
+                        D[tmp].append(u)
+                        deg[u] = tmp
+                self.G.remove_node(v)
+        return c
+
     def show(self):
         pos = nx.spring_layout(self.G)
         nx.draw_networkx_nodes(self.G, pos, node_size=100, node_color="g")
@@ -114,16 +150,19 @@ if __name__ == '__main__':
     SAVE_PATH = BASE_DIR + '/data/'
 
     kcore = k_eta_core()
+    c = kcore.cores(3, 0.01)
+    print(c)
 
-    test = [
-        [0, 2],
-        [1, 2],
-        [2, 3],
-        [5, 2],
-    ]
-    for row in test:
-        v = row[0]
-        i = row[1]
 
-        k = kcore.eta_deg(v, 0.01)
-        print("eta deg(%d)=" % v, k)
+    # test = [
+    #     [0, 2],
+    #     [1, 2],
+    #     [2, 3],
+    #     [5, 2],
+    # ]
+    # for row in test:
+    #     v = row[0]
+    #     i = row[1]
+    #
+    #     k = kcore.eta_deg(v, 0.01)
+    #     print("eta deg(%d)=" % v, k)
